@@ -1,0 +1,16 @@
+{
+  "thresholds": {
+    "chem_disease": 0.21,
+    "gene_disease": 0.31,
+    "cg_activity": 0.19,
+    "cg_expression": 0.21,
+    "cg_other": 0.59
+  },
+  "_cfg": {
+    "gate_alpha": 0.0,
+    "gate_min": 0.0,
+    "emit_argmax": true,
+    "argmax_gate": 0.55
+  },
+  "_oof_score": 0.37005815949976917
+}
