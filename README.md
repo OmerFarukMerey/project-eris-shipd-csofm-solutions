@@ -1,2 +1,4 @@
 # project-eris-shipd-my-solutions
-This is the repository of my solutions in shipd.ai (Currently only on Project Eris)
+
+My solutions to quests on [shipd.ai](https://shipd.ai) (currently all from **Project Eris**). Each folder is
+a self-contained quest with its own README explaining the approach.

@@ -1,0 +1,17 @@
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Editor / tool local state
+.claude/
+.ipynb_checkpoints/
+
+# Training run artifacts (regenerable, not needed to reproduce results)
+catboost_info/
+
+# Quest datasets are Shipd challenge content (per shipd.ai/terms) - not ours to redistribute
+dataset/
