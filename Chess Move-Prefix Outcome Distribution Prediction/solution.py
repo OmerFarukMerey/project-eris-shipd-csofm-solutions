@@ -12,6 +12,7 @@ inputs. No external game/engine lookups, no id/row-order signal.
 """
 import os
 import warnings
+from collections import defaultdict
 
 import numpy as np
 import pandas as pd
@@ -205,6 +206,86 @@ def baseline_a_predict(priors, move_prefix_series):
 
 
 # --------------------------------------------------------------------------
+# Model A: full prefix-trie empirical-Bayes backoff (replaces the 2-level
+# prior as the blend's model A; the 2-level prior above is kept only to
+# feed fm_prior/f4_prior features to models B/C/D and as a reference
+# baseline for the prior-based composite diagnostic).
+#
+# One shrinkage level per additional full move (token counts 1, 4, 6, 8, 10,
+# 12, 14, 16, 18 -- matching the dataset's ply granularity), each level
+# shrunk toward its immediate parent level by cohort-weighted game count,
+# with no cap on how many distinct prefixes a level can hold. Every
+# move_prefix in the public data is globally unique, so this is not
+# memorization -- the signal comes from shared sub-openings at intermediate
+# depths that a first-4-token cap throws away.
+# --------------------------------------------------------------------------
+TRIE_LEVELS = (1, 4, 6, 8, 10, 12, 14, 16, 18)
+TRIE_K = 50.0
+
+
+def fit_trie_priors(df, levels=TRIE_LEVELS, k=TRIE_K):
+    rates = df[CLASSES].values
+    weights = df["cohort_game_count"].values.astype(float)
+    tok_lists = [mp.split() for mp in df["move_prefix"].values]
+    n = len(df)
+
+    global_prior = np.average(rates, axis=0, weights=weights)
+
+    level_stats = {}
+    prev_stats = None
+    prev_level = None
+    for level in levels:
+        sums = defaultdict(lambda: np.zeros(3))
+        wsum = defaultdict(float)
+        for i in range(n):
+            t = tok_lists[i]
+            if len(t) < level:
+                continue
+            key = " ".join(t[:level])
+            sums[key] += rates[i] * weights[i]
+            wsum[key] += weights[i]
+        stats = {}
+        for key, s in sums.items():
+            n_b = wsum[key]
+            raw = s / n_b
+            if prev_stats is None:
+                parent = global_prior
+            else:
+                parent_key = " ".join(key.split()[:prev_level])
+                parent = prev_stats.get(parent_key, global_prior)
+            stats[key] = (raw * n_b + parent * k) / (n_b + k)
+        level_stats[level] = stats
+        prev_stats = stats
+        prev_level = level
+
+    def predict_fn(move_prefix_series):
+        out = np.zeros((len(move_prefix_series), 3))
+        for i, mp in enumerate(move_prefix_series):
+            t = mp.split()
+            best = global_prior
+            for level in levels:
+                if len(t) < level:
+                    break
+                key = " ".join(t[:level])
+                s = level_stats[level]
+                if key in s:
+                    best = s[key]
+                else:
+                    break
+            out[i] = best
+        return out
+
+    return {"global_prior": global_prior, "level_stats": level_stats, "predict_fn": predict_fn}
+
+
+def trie_a_predict(trie_priors, move_prefix_series):
+    p = trie_priors["predict_fn"](move_prefix_series)
+    p = np.clip(p, EPS, None)
+    p = p / p.sum(axis=1, keepdims=True)
+    return p
+
+
+# --------------------------------------------------------------------------
 # Categorical opening buckets (top-K + other), one-hot
 # --------------------------------------------------------------------------
 def build_bucket_encoder(values, top_k):
@@ -234,14 +315,13 @@ class FeatureBuilder:
 
     def fit(self, df, priors):
         self.priors = priors
-        
-        # CountVectorizer yerine TfidfVectorizer kullanıyoruz, n-gram aralığı (1, 5) yapıldı
+
         self.vectorizer = TfidfVectorizer(
-            tokenizer=str.split, 
-            token_pattern=None, 
+            tokenizer=str.split,
+            token_pattern=None,
             lowercase=False,
-            min_df=self.min_df, 
-            ngram_range=(1, 5),
+            min_df=self.min_df,
+            ngram_range=(1, 2),
             sublinear_tf=True
         )
         self.vectorizer.fit(df["move_prefix"])
@@ -253,9 +333,8 @@ class FeatureBuilder:
 
         hc = build_handcrafted_matrix(df["move_prefix"])
         hc["prefix_ply_count"] = df["prefix_ply_count"].values
-        # side_to_move bilgisini sayısal (0 ve 1) olarak dahil ediyoruz
         hc["is_white_to_move"] = (df["side_to_move"].str.lower() == "white").astype(int)
-        
+
         self.handcrafted_columns = list(hc.columns)
 
         fm_oh = one_hot(self.fm_encode(first_moves), self.fm_categories)
@@ -350,18 +429,17 @@ def fit_predict_gbm(X_train, y_train_rates, w_train, X_val):
     for c in range(3):
         target = y_train_rates[:, c]
         if HAS_LGB:
-            # Model kapasitesi önemli ölçüde artırıldı (n_estimators, num_leaves, max_depth)
             model = lgb.LGBMRegressor(
-                n_estimators=400,        
-                num_leaves=63,           
-                max_depth=7,             
-                learning_rate=0.05,      
+                n_estimators=250,
+                num_leaves=7,
+                max_depth=3,
+                learning_rate=0.08,
                 min_child_samples=15,
-                subsample=0.8, 
+                subsample=0.8,
                 colsample_bytree=0.8,
-                reg_alpha=0.2, 
-                reg_lambda=1.0, 
-                random_state=SEED, 
+                reg_alpha=0.2,
+                reg_lambda=1.0,
+                random_state=SEED,
                 verbose=-1,
             )
             model.fit(X_train, target, sample_weight=w_train)
@@ -507,7 +585,8 @@ def main():
 
             w_tr = wfn(df_tr["cohort_game_count"].values.astype(float))
 
-            oof_A[va_idx] = baseline_a_predict(priors, df_va["move_prefix"])
+            trie_priors = fit_trie_priors(df_tr)
+            oof_A[va_idx] = trie_a_predict(trie_priors, df_va["move_prefix"])
             p_B, _ = fit_predict_logreg(X_lin_tr, df_tr[CLASSES].values, w_tr, X_lin_va)
             oof_B[va_idx] = p_B
             p_C, _ = fit_predict_gbm(X_tree_tr, df_tr[CLASSES].values, w_tr, X_tree_va)
@@ -532,7 +611,18 @@ def main():
     oof_A, oof_B, oof_C, oof_D = oof_preds["A"], oof_preds["B"], oof_preds["C"], oof_preds["D"]
     base_p = np.tile(np.average(y_all, axis=0, weights=w_all_raw), (len(train), 1))
 
-    standalone = [("A (empirical-Bayes prior)", oof_A),
+    # Old 2-level prior's OOF predictions, computed only as a reference baseline for
+    # the "prior-based composite" diagnostic below (using the new trie prior, which is
+    # now the dominant blend component, as its own reference would be circular).
+    oof_A_old2level = np.zeros((len(train), 3))
+    for tr_idx, va_idx in folds:
+        df_tr = train.iloc[tr_idx].reset_index(drop=True)
+        df_va = train.iloc[va_idx].reset_index(drop=True)
+        priors_old = fit_hierarchical_priors(df_tr)
+        oof_A_old2level[va_idx] = baseline_a_predict(priors_old, df_va["move_prefix"])
+
+    standalone = [("A (prefix-trie prior)", oof_A),
+                  ("A' (old 2-level prior, reference only)", oof_A_old2level),
                   ("B (logreg, sample-expansion)", oof_B),
                   ("C (GBM per-class)", oof_C)]
     if use_D:
@@ -566,9 +656,19 @@ def main():
     print(f"[CV] per-class NNLS blend weights ({model_names}):")
     for cls_name, w in zip(CLASSES, perclass_weights):
         print(f"       {cls_name}: {np.round(w, 3).tolist()}")
-    print(f"[CV] proxy composite={best_detail['composite']:.4f} "
+    print(f"[CV] proxy composite (vs flat-mean reference) ={best_detail['composite']:.4f} "
           f"s_brier={best_detail['s_brier']:.4f} s_log={best_detail['s_log']:.4f} "
           f"s_conf={best_detail['s_conf']:.4f} s_worst={best_detail['s_worst']:.4f}")
+    # sample_submission.csv is NOT a flat prediction (it varies per row, tracking a
+    # first-move-level prior), so BRIER_REF/LOG_REF/CONF_REF are almost certainly defined
+    # against a prior-based baseline, not a flat mean - a flat-mean reference is easier to
+    # beat and so overstates the real composite. Report both so this isn't overclaimed.
+    strong_ref = np.clip(oof_A_old2level, EPS, None)
+    strong_ref = strong_ref / strong_ref.sum(axis=1, keepdims=True)
+    strong_detail = composite_proxy(y_all, oof_blend, oof_conf_raw, ply_all, strong_ref)
+    print(f"[CV] proxy composite (vs prior-based reference)={strong_detail['composite']:.4f} "
+          f"s_brier={strong_detail['s_brier']:.4f} s_log={strong_detail['s_log']:.4f} "
+          f"s_conf={strong_detail['s_conf']:.4f} s_worst={strong_detail['s_worst']:.4f}")
     print(f"[CV] confidence MAE raw={mae_raw:.4f} isotonic={mae_cal:.4f} "
           f"-> using {'isotonic' if use_isotonic else 'raw max(p)'}")
 
@@ -581,7 +681,8 @@ def main():
 
     X_lin_test, X_tree_test = fb_full.transform(test)
 
-    p_A_test = baseline_a_predict(priors_full, test["move_prefix"])
+    trie_priors_full = fit_trie_priors(train)
+    p_A_test = trie_a_predict(trie_priors_full, test["move_prefix"])
     p_B_test, _ = fit_predict_logreg(X_lin_full, train[CLASSES].values, w_full, X_lin_test)
     p_C_test, _ = fit_predict_gbm(X_tree_full, train[CLASSES].values, w_full, X_tree_test)
     if use_D:
