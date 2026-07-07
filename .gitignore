@@ -15,3 +15,7 @@ catboost_info/
 
 # Quest datasets are Shipd challenge content (per shipd.ai/terms) - not ours to redistribute
 dataset/
+
+# Claude Code
+prompt.md
+CLAUDE.md
