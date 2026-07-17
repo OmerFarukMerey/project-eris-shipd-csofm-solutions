@@ -1,0 +1,16 @@
+/Users/ofm/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+fold 0 auc 0.6691 iters 284
+/Users/ofm/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+fold 1 auc 0.7452 iters 786
+/Users/ofm/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+fold 2 auc 0.7013 iters 301
+/Users/ofm/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+fold 3 auc 0.6740 iters 395
+/Users/ofm/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LGBMClassifier was fitted with feature names
+  warnings.warn(
+fold 4 auc 0.6869 iters 330
+shallow OOF AUC: 0.697378390748835 mean iters: 419.2
