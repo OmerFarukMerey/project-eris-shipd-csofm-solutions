@@ -3,10 +3,8 @@
 My solutions to quests on [shipd.ai](https://shipd.ai) (currently all from **Project Eris**). Each folder is
 a self-contained quest with its own README explaining the approach.
 
-## Quests
+## Selected retained quests
 
 - [Chess Move-Prefix Outcome Distribution Prediction](<Chess Move-Prefix Outcome Distribution Prediction/README.md>)
 - [Code Behavior Fingerprint Recovery](<Code Behavior Fingerprint Recovery/README.md>)
 - [DNA Barcode Family and Artifact Detection](<DNA Barcode Family and Artifact Detection/README.md>)
-- [Microscopy Bacilli Localization and Counting](<Microscoppy Bacilli Localization and Counting/README.md>)
-- [Biomedical Evidence Graph Omission Repair](<Biomedical Evidence Graph Omission Repair/README.md>)
