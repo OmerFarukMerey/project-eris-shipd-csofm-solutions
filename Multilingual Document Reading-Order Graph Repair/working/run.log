@@ -1,0 +1,17 @@
+[   0.2s] device mps | train (3359, 3) test (841, 2) | cases 3359/841
+[   0.3s] placeholder submission written -> ./working/submission.csv
+[   0.5s] usable train pages 3359/3359 {'A': 884, 'C': 835, 'B': 784, 'D': 856}
+[   6.5s] using pretrained backbone distilbert-base-multilingual-cased dim 768
+[   8.0s] tokenised; longest packed page = 352 tokens
+[   8.0s] fit 3023 / holdout 336
+[ 462.6s] ep 00 loss 9.990 nl 1.623 skip 0 | holdout 0.3095 exact 0.1696 | 454s
+[ 876.5s] ep 01 loss 7.742 nl 0.946 skip 0 | holdout 0.3488 exact 0.1815 | 414s
+[1348.3s] ep 02 loss 6.493 nl 0.716 skip 0 | holdout 0.3985 exact 0.2798 | 472s
+[2081.3s] ep 03 loss 5.283 nl 0.611 skip 0 | holdout 0.4193 exact 0.2887 | 733s
+[2081.5s] time guard -- stopping training at epoch 4
+[2081.6s] best holdout 0.4193
+[2085.1s] holdout before offset search 0.4034 (exact 0.2679)
+[2086.6s] holdout after offset search 0.4195 (exact 0.2887) offsets [0.3, 0.0, 0.0, -1.2]
+[2148.4s] model produced predictions for 841/841 test rows
+[2148.5s] submission rows=841 cols=['id', 'repair_sequence'] complete=True
+[2148.5s] done
