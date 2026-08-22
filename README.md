@@ -15,17 +15,17 @@ pretrained lookup tables, no hardcoded answer rules, no external corpora.
 
 | # | Challenge | Rank | Local score |
 |---|---|---|---|
-| 1 | [Docstring Gap Restoration](<Docstring Gap Restoration/readme.txt>) | 🥇 1st | 0.534 char n-gram F |
-| 2 | [Polyphonic Vocal Passage Event Recovery](<Polyphonic Vocal Passage Event Recovery/readme.txt>) | 🥇 1st | 0.200 holdout |
-| 3 | [Adverse Event Reaction Code Recommendation](<Adverse Event Reaction Code Recommendation/readme.txt>) | 🥇 1st | 0.307 balanced MAP@5 |
-| 4 | [Coastal Sensor Signature Recommendation](<Coastal Sensor Signature Recommendation/readme.txt>) | 🥇 1st | 0.496 CV / 0.520 LB |
-| 5 | [Biocatalytic Product Recommendation](<Biocatalytic Product Recommendation: Ranking Candidates by Enzyme Relevance/readme.txt>) | 🥈 2nd | 0.258 final (0.836 quality) |
-| 6 | [Ornament Sequence Recovery from Lossy Performance Views](<Ornament Sequence Recovery from Lossy Performance Views/readme.txt>) | 🥈 2nd | 72.6 holdout |
-| 7 | [Anonymized Vocal Fragment Routing](<Anonymized Vocal Fragment Routing/readme.txt>) | 🥈 2nd | 0.443 reranked |
-| 8 | [Lean Proof Patch Recovery](<Lean Proof Patch Recovery/readme.txt>) | 🥈 2nd | 0.424 3-fold mean |
-| 9 | [Catalan Administrative Discourse Operator Reconstruction](<Catalan Administrative Discourse Operator Reconstruction/readme.txt>) | 🥉 3rd | 0.558 OOF |
-| 10 | [Cross-Lead ECG Wave Landmark Recovery](<Cross-Lead ECG Wave Landmark Recovery/readme.txt>) | 🥉 3rd | 0.710 grouped 5-fold |
-| 11 | [Biomedical Concept Evidence Ranking](<Biomedical Concept Evidence Ranking/readme.txt>) | 🥉 3rd | 0.645 OOF composite |
+| 1 | [Docstring Gap Restoration](Docstring%20Gap%20Restoration/readme.txt) | 🥇 1st | 0.534 char n-gram F |
+| 2 | [Polyphonic Vocal Passage Event Recovery](Polyphonic%20Vocal%20Passage%20Event%20Recovery/readme.txt) | 🥇 1st | 0.200 holdout |
+| 3 | [Adverse Event Reaction Code Recommendation](Adverse%20Event%20Reaction%20Code%20Recommendation/readme.txt) | 🥇 1st | 0.307 balanced MAP@5 |
+| 4 | [Coastal Sensor Signature Recommendation](Coastal%20Sensor%20Signature%20Recommendation/readme.txt) | 🥇 1st | 0.496 CV / 0.520 LB |
+| 5 | [Biocatalytic Product Recommendation](Biocatalytic%20Product%20Recommendation%3A%20Ranking%20Candidates%20by%20Enzyme%20Relevance/readme.txt) | 🥈 2nd | 0.258 final (0.836 quality) |
+| 6 | [Ornament Sequence Recovery from Lossy Performance Views](Ornament%20Sequence%20Recovery%20from%20Lossy%20Performance%20Views/readme.txt) | 🥈 2nd | 72.6 holdout |
+| 7 | [Anonymized Vocal Fragment Routing](Anonymized%20Vocal%20Fragment%20Routing/readme.txt) | 🥈 2nd | 0.443 reranked |
+| 8 | [Lean Proof Patch Recovery](Lean%20Proof%20Patch%20Recovery/readme.txt) | 🥈 2nd | 0.424 3-fold mean |
+| 9 | [Catalan Administrative Discourse Operator Reconstruction](Catalan%20Administrative%20Discourse%20Operator%20Reconstruction/readme.txt) | 🥉 3rd | 0.558 OOF |
+| 10 | [Cross-Lead ECG Wave Landmark Recovery](Cross-Lead%20ECG%20Wave%20Landmark%20Recovery/readme.txt) | 🥉 3rd | 0.710 grouped 5-fold |
+| 11 | [Biomedical Concept Evidence Ranking](Biomedical%20Concept%20Evidence%20Ranking/readme.txt) | 🥉 3rd | 0.645 OOF composite |
 
 Scores are on my own held-out validation unless noted as a leaderboard (LB) figure; each metric is
 challenge-specific, so numbers are not comparable across rows.
