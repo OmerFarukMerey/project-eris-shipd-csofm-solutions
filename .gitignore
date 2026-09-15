@@ -23,3 +23,5 @@ image.png
 
 # Local reference documents
 Project Eris - Solver Guidebook.pdf
+# Kaggle remote-execution staging (contains a copy of the challenge data)
+.kaggle_runs/
