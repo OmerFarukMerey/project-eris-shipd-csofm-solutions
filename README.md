@@ -11,7 +11,7 @@ pretrained lookup tables, no hardcoded answer rules, no external corpora.
 
 ## Results
 
-11 challenges placed, all on the podium.
+12 challenges placed, all on the podium.
 
 | # | Challenge | Rank | Local score |
 |---|---|---|---|
@@ -19,13 +19,14 @@ pretrained lookup tables, no hardcoded answer rules, no external corpora.
 | 2 | [Polyphonic Vocal Passage Event Recovery](Polyphonic%20Vocal%20Passage%20Event%20Recovery/readme.txt) | 🥇 1st | 0.200 holdout |
 | 3 | [Adverse Event Reaction Code Recommendation](Adverse%20Event%20Reaction%20Code%20Recommendation/readme.txt) | 🥇 1st | 0.307 balanced MAP@5 |
 | 4 | [Coastal Sensor Signature Recommendation](Coastal%20Sensor%20Signature%20Recommendation/readme.txt) | 🥇 1st | 0.496 CV / 0.520 LB |
-| 5 | [Biocatalytic Product Recommendation](Biocatalytic%20Product%20Recommendation%3A%20Ranking%20Candidates%20by%20Enzyme%20Relevance/readme.txt) | 🥈 2nd | 0.258 final (0.836 quality) |
-| 6 | [Ornament Sequence Recovery from Lossy Performance Views](Ornament%20Sequence%20Recovery%20from%20Lossy%20Performance%20Views/readme.txt) | 🥈 2nd | 72.6 holdout |
-| 7 | [Anonymized Vocal Fragment Routing](Anonymized%20Vocal%20Fragment%20Routing/readme.txt) | 🥈 2nd | 0.443 reranked |
-| 8 | [Lean Proof Patch Recovery](Lean%20Proof%20Patch%20Recovery/readme.txt) | 🥈 2nd | 0.424 3-fold mean |
-| 9 | [Catalan Administrative Discourse Operator Reconstruction](Catalan%20Administrative%20Discourse%20Operator%20Reconstruction/readme.txt) | 🥉 3rd | 0.558 OOF |
-| 10 | [Cross-Lead ECG Wave Landmark Recovery](Cross-Lead%20ECG%20Wave%20Landmark%20Recovery/readme.txt) | 🥉 3rd | 0.710 grouped 5-fold |
-| 11 | [Biomedical Concept Evidence Ranking](Biomedical%20Concept%20Evidence%20Ranking/readme.txt) | 🥉 3rd | 0.645 OOF composite |
+| 5 | [KineScope: Multimodal RAG Evidence Calibration](KineScope%3A%20Multimodal%20RAG%20Evidence%20Calibration/readme.txt) | 🥇 1st | 0.482 LOSO / 0.436 LB |
+| 6 | [Biocatalytic Product Recommendation](Biocatalytic%20Product%20Recommendation%3A%20Ranking%20Candidates%20by%20Enzyme%20Relevance/readme.txt) | 🥈 2nd | 0.258 final (0.836 quality) |
+| 7 | [Ornament Sequence Recovery from Lossy Performance Views](Ornament%20Sequence%20Recovery%20from%20Lossy%20Performance%20Views/readme.txt) | 🥈 2nd | 72.6 holdout |
+| 8 | [Anonymized Vocal Fragment Routing](Anonymized%20Vocal%20Fragment%20Routing/readme.txt) | 🥈 2nd | 0.443 reranked |
+| 9 | [Lean Proof Patch Recovery](Lean%20Proof%20Patch%20Recovery/readme.txt) | 🥈 2nd | 0.424 3-fold mean |
+| 10 | [Catalan Administrative Discourse Operator Reconstruction](Catalan%20Administrative%20Discourse%20Operator%20Reconstruction/readme.txt) | 🥉 3rd | 0.558 OOF |
+| 11 | [Cross-Lead ECG Wave Landmark Recovery](Cross-Lead%20ECG%20Wave%20Landmark%20Recovery/readme.txt) | 🥉 3rd | 0.710 grouped 5-fold |
+| 12 | [Biomedical Concept Evidence Ranking](Biomedical%20Concept%20Evidence%20Ranking/readme.txt) | 🥉 3rd | 0.645 OOF composite |
 
 Scores are on my own held-out validation unless noted as a leaderboard (LB) figure; each metric is
 challenge-specific, so numbers are not comparable across rows.
@@ -85,6 +86,25 @@ small frequency penalty counters the metric/popularity mismatch. Biggest single 
 handing the regressors regime fields already present in the query. Passing a second, differently
 biased Ridge model in *as a feature* helped; fixed score-level blending did not — feature-level
 fusion lets the final model learn conditional trust.
+
+### 🥇 KineScope: Multimodal RAG Evidence Calibration
+
+**Problem.** Score how strongly a retrieved evidence event supports the claim that a query event is
+more persistent, from two 64-dimensional blocks sharing one anonymous coordinate system. Swapping the
+blocks must reverse the relation. The metric is RMSE skill against a constant neutral prediction, and
+the evaluation sessions are disjoint from the training sessions.
+
+**Solution.** Predict through a Thurstone difference, `Φ(s(query) − s(evidence))`, with a single
+per-event scorer shared by both blocks, so antisymmetry holds by construction rather than by
+averaging. The scorer is an L1-gated Siamese MLP — a learned per-dimension input scale that keeps the
+mid-variance persistence directions and suppresses the top-variance acquisition-condition ones —
+trained with squared error directly in the metric's probability space. The decisive work was
+validation, not architecture: the 7,260 occurrences come from a few hundred source events, so
+random-row CV rewards memorizing events and read 0.68 while the leaderboard paid 0.362.
+Leave-one-session-out exposed that, and `solution.py` reproduces the honest protocol in-script by
+grouping pairs into k-means pseudo-conditions and scoring only validation rows far from any
+training-fold event. Heavy regularization transferred; difference-only, kernel, bilinear, whitened,
+group-DRO and blended variants did not.
 
 ### 🥈 Biocatalytic Product Recommendation: Ranking Candidates by Enzyme Relevance
 
