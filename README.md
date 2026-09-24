@@ -11,7 +11,7 @@ pretrained lookup tables, no hardcoded answer rules, no external corpora.
 
 ## Results
 
-12 challenges placed, all on the podium.
+13 challenges placed, all on the podium.
 
 | # | Challenge | Rank | Local score |
 |---|---|---|---|
@@ -20,13 +20,14 @@ pretrained lookup tables, no hardcoded answer rules, no external corpora.
 | 3 | [Adverse Event Reaction Code Recommendation](Adverse%20Event%20Reaction%20Code%20Recommendation/readme.txt) | 🥇 1st | 0.307 balanced MAP@5 |
 | 4 | [Coastal Sensor Signature Recommendation](Coastal%20Sensor%20Signature%20Recommendation/readme.txt) | 🥇 1st | 0.496 CV / 0.520 LB |
 | 5 | [KineScope: Multimodal RAG Evidence Calibration](KineScope%3A%20Multimodal%20RAG%20Evidence%20Calibration/readme.txt) | 🥇 1st | 0.482 LOSO / 0.436 LB |
-| 6 | [Biocatalytic Product Recommendation](Biocatalytic%20Product%20Recommendation%3A%20Ranking%20Candidates%20by%20Enzyme%20Relevance/readme.txt) | 🥈 2nd | 0.258 final (0.836 quality) |
-| 7 | [Ornament Sequence Recovery from Lossy Performance Views](Ornament%20Sequence%20Recovery%20from%20Lossy%20Performance%20Views/readme.txt) | 🥈 2nd | 72.6 holdout |
-| 8 | [Anonymized Vocal Fragment Routing](Anonymized%20Vocal%20Fragment%20Routing/readme.txt) | 🥈 2nd | 0.443 reranked |
-| 9 | [Lean Proof Patch Recovery](Lean%20Proof%20Patch%20Recovery/readme.txt) | 🥈 2nd | 0.424 3-fold mean |
-| 10 | [Catalan Administrative Discourse Operator Reconstruction](Catalan%20Administrative%20Discourse%20Operator%20Reconstruction/readme.txt) | 🥉 3rd | 0.558 OOF |
-| 11 | [Cross-Lead ECG Wave Landmark Recovery](Cross-Lead%20ECG%20Wave%20Landmark%20Recovery/readme.txt) | 🥉 3rd | 0.710 grouped 5-fold |
-| 12 | [Biomedical Concept Evidence Ranking](Biomedical%20Concept%20Evidence%20Ranking/readme.txt) | 🥉 3rd | 0.645 OOF composite |
+| 6 | [Anonymous Unwanted-Call Thread Reconstruction](Anonymous%20Unwanted-Call%20Thread%20Reconstruction/readme.txt) | 🥇 1st | 0.560 10-fold OOF |
+| 7 | [Biocatalytic Product Recommendation](Biocatalytic%20Product%20Recommendation%3A%20Ranking%20Candidates%20by%20Enzyme%20Relevance/readme.txt) | 🥈 2nd | 0.258 final (0.836 quality) |
+| 8 | [Ornament Sequence Recovery from Lossy Performance Views](Ornament%20Sequence%20Recovery%20from%20Lossy%20Performance%20Views/readme.txt) | 🥈 2nd | 72.6 holdout |
+| 9 | [Anonymized Vocal Fragment Routing](Anonymized%20Vocal%20Fragment%20Routing/readme.txt) | 🥈 2nd | 0.443 reranked |
+| 10 | [Lean Proof Patch Recovery](Lean%20Proof%20Patch%20Recovery/readme.txt) | 🥈 2nd | 0.424 3-fold mean |
+| 11 | [Catalan Administrative Discourse Operator Reconstruction](Catalan%20Administrative%20Discourse%20Operator%20Reconstruction/readme.txt) | 🥉 3rd | 0.558 OOF |
+| 12 | [Cross-Lead ECG Wave Landmark Recovery](Cross-Lead%20ECG%20Wave%20Landmark%20Recovery/readme.txt) | 🥉 3rd | 0.710 grouped 5-fold |
+| 13 | [Biomedical Concept Evidence Ranking](Biomedical%20Concept%20Evidence%20Ranking/readme.txt) | 🥉 3rd | 0.645 OOF composite |
 
 Scores are on my own held-out validation unless noted as a leaderboard (LB) figure; each metric is
 challenge-specific, so numbers are not comparable across rows.
@@ -105,6 +106,21 @@ Leave-one-session-out exposed that, and `solution.py` reproduces the honest prot
 grouping pairs into k-means pseudo-conditions and scoring only validation rows far from any
 training-fold event. Heavy regularization transferred; difference-only, kernel, bilinear, whitened,
 group-DRO and blended variants did not.
+
+### 🥇 Anonymous Unwanted-Call Thread Reconstruction
+
+**Problem.** Given two anchor complaints from an anonymous caller, pick which of eight candidate
+profiles (three complaints each) belongs to the same caller and emit its complaint IDs as a
+chronological chain. The metric mixes profile accuracy, complaint-set F1, directed-chain F1 and exact
+chain accuracy.
+
+**Solution.** Always emitting all three cards of one profile in time order makes every metric
+component agree, so the task collapses to selecting the right profile. A CatBoost QuerySoftMax group
+ranker (one group per case) over 126 raw categorical columns — per-position values, field composites,
+ordered and order-free sequence signatures — plus 391 numeric matching features, blended 0.9/0.1 with
+a strongly regularized logistic similarity ranker after per-case z-scoring. Optimizing relative
+ordering within a case beat eight independent binary classifications: 0.525 → 0.545 → 0.560 OOF, and
+an expanded classifier stack that improved OOF but not the evaluation slice was removed.
 
 ### 🥈 Biocatalytic Product Recommendation: Ranking Candidates by Enzyme Relevance
 
