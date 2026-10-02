@@ -11,7 +11,7 @@ pretrained lookup tables, no hardcoded answer rules, no external corpora.
 
 ## Results
 
-13 challenges placed, all on the podium.
+14 challenges placed, all on the podium.
 
 | # | Challenge | Rank | Local score |
 |---|---|---|---|
@@ -25,9 +25,10 @@ pretrained lookup tables, no hardcoded answer rules, no external corpora.
 | 8 | [Ornament Sequence Recovery from Lossy Performance Views](Ornament%20Sequence%20Recovery%20from%20Lossy%20Performance%20Views/readme.txt) | 🥈 2nd | 72.6 holdout |
 | 9 | [Anonymized Vocal Fragment Routing](Anonymized%20Vocal%20Fragment%20Routing/readme.txt) | 🥈 2nd | 0.443 reranked |
 | 10 | [Lean Proof Patch Recovery](Lean%20Proof%20Patch%20Recovery/readme.txt) | 🥈 2nd | 0.424 3-fold mean |
-| 11 | [Catalan Administrative Discourse Operator Reconstruction](Catalan%20Administrative%20Discourse%20Operator%20Reconstruction/readme.txt) | 🥉 3rd | 0.558 OOF |
-| 12 | [Cross-Lead ECG Wave Landmark Recovery](Cross-Lead%20ECG%20Wave%20Landmark%20Recovery/readme.txt) | 🥉 3rd | 0.710 grouped 5-fold |
-| 13 | [Biomedical Concept Evidence Ranking](Biomedical%20Concept%20Evidence%20Ranking/readme.txt) | 🥉 3rd | 0.645 OOF composite |
+| 11 | [Compact Packaging of Annotated Skin Regions](Compact%20Packaging%20of%20Annotated%20Skin%20Regions/readme.txt) | 🥈 2nd | 0.561 OOF held-out |
+| 12 | [Catalan Administrative Discourse Operator Reconstruction](Catalan%20Administrative%20Discourse%20Operator%20Reconstruction/readme.txt) | 🥉 3rd | 0.558 OOF |
+| 13 | [Cross-Lead ECG Wave Landmark Recovery](Cross-Lead%20ECG%20Wave%20Landmark%20Recovery/readme.txt) | 🥉 3rd | 0.710 grouped 5-fold |
+| 14 | [Biomedical Concept Evidence Ranking](Biomedical%20Concept%20Evidence%20Ranking/readme.txt) | 🥉 3rd | 0.645 OOF composite |
 
 Scores are on my own held-out validation unless noted as a leaderboard (LB) figure; each metric is
 challenge-specific, so numbers are not comparable across rows.
@@ -175,6 +176,25 @@ line-LCS, and exact-patch bonuses.
 copied lines, generic tactics, train-only nearest neighbors, alias remapping, and slotted templates.
 A tactic-family classifier plus CatBoost regression rank `(start, insertion)` pairs jointly against a
 metric-shaped target. Candidate diversity and joint ranking carried the gain.
+
+### 🥈 Compact Packaging of Annotated Skin Regions
+
+**Problem.** Locate the annotated lesions on a total-body-photography skin tile, predict each region's
+box, and enclose them in at most three rectangular crops. The metric mixes region F1 at IoU 0.50/0.75,
+the fraction of regions fully inside one crop, and a compactness term that pays only when total crop
+area stays near a greedy reference plan of the true regions. Any invalid box zeroes the whole case.
+
+**Solution.** A ConvNeXt-tiny (ImageNet-22k) + FPN detector trained in-script with a CenterNet
+heatmap, FCOS-style edge distances, and a per-edge Laplace uncertainty head, over 3 folds so every
+training image gets out-of-fold detections. Logistic calibrators fitted on those detections turn raw
+scores into match probabilities. Regions are decoded by maximizing expected F1 per image; crops by
+Monte-Carlo expected-metric decoding — 128 sampled "worlds" of which detections are real and where
+their edges truly lie, scored against candidate plans that are exact minimum-area ≤3-rectangle
+partitions of the top detections with uncertainty-scaled margins. Dropping global thresholds for
+expected-metric decoding was the biggest win: images with only four or five regions were losing most
+of their utility to false positives that forced oversized merged crops. A subtler one: annotations sit
+~0.8 px above the image content, so vertical-flip augmentation averaged that offset away — removing it
+lifted IoU ≥ 0.75 matches from 56% to 60%.
 
 ### 🥉 Catalan Administrative Discourse Operator Reconstruction
 
