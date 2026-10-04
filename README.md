@@ -11,7 +11,7 @@ pretrained lookup tables, no hardcoded answer rules, no external corpora.
 
 ## Results
 
-14 challenges placed, all on the podium.
+15 challenges placed, all on the podium.
 
 | # | Challenge | Rank | Local score |
 |---|---|---|---|
@@ -29,6 +29,7 @@ pretrained lookup tables, no hardcoded answer rules, no external corpora.
 | 12 | [Catalan Administrative Discourse Operator Reconstruction](Catalan%20Administrative%20Discourse%20Operator%20Reconstruction/readme.txt) | 🥉 3rd | 0.558 OOF |
 | 13 | [Cross-Lead ECG Wave Landmark Recovery](Cross-Lead%20ECG%20Wave%20Landmark%20Recovery/readme.txt) | 🥉 3rd | 0.710 grouped 5-fold |
 | 14 | [Biomedical Concept Evidence Ranking](Biomedical%20Concept%20Evidence%20Ranking/readme.txt) | 🥉 3rd | 0.645 OOF composite |
+| 15 | [Reconstructing Corporate Group Hierarchies from Company Records](Reconstructing%20Corporate%20Group%20Hierarchies%20from%20Company%20Records/solution.py) | 🥉 3rd | — |
 
 Scores are on my own held-out validation unless noted as a leaderboard (LB) figure; each metric is
 challenge-specific, so numbers are not comparable across rows.
@@ -237,6 +238,26 @@ semantic-versus-lexical contrast features, then train a single CatBoost YetiRank
 query-grouped folds. Against adversarial lexical distractors the winning move was explicitly
 modelling the residual "semantic similarity beyond overlap" instead of adding more overlap variants.
 A single sharp ranker beat model blending — averaging diluted confident rank-one choices.
+
+### 🥉 Reconstructing Corporate Group Hierarchies from Company Records
+
+**Problem.** Each held-out corporate family comes as a list of member entities (registered name,
+legal form, jurisdiction, cities, registration date) with the ultimate parent marked and every link
+hidden. Recover each member's direct parent. Only intermediate links are scored — links to the
+ultimate parent are never counted — so the star-shaped "everything under the top" guess is worth
+exactly zero, and whole families are held out.
+
+**Solution.** Score every (child, candidate parent) pair inside a family with a seed-bagged LightGBM
+over pairwise name similarity (leading-word runs, char 3-gram Jaccard, IDF-weighted token overlap,
+token containment), each also expressed as a gap to the child's best candidate and a rank among its
+candidates, plus legal-form, jurisdiction and city agreement and registration-date gaps. Two node-level
+TF-IDF char n-gram logistic models, used out-of-fold, add whether a name looks like it has subsidiaries
+and whether it sits under an intermediate parent. Instead of an independent argmax per child, the pair
+scores become edge potentials of a distribution over spanning trees rooted at the ultimate parent; the
+Matrix-Tree theorem gives exact edge marginals, and a child gets its best non-root candidate only when
+that marginal clears a threshold. Boosting rounds, decode temperature and threshold are searched
+in-script on family-grouped 5-fold OOF of the full pipeline, with every transform re-fit inside each
+fold, and test pairs are scored by the average of the five fold models.
 
 ---
 
