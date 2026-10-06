@@ -11,7 +11,7 @@ pretrained lookup tables, no hardcoded answer rules, no external corpora.
 
 ## Results
 
-15 challenges placed, all on the podium.
+16 challenges placed, all on the podium.
 
 | # | Challenge | Rank | Local score |
 |---|---|---|---|
@@ -30,6 +30,7 @@ pretrained lookup tables, no hardcoded answer rules, no external corpora.
 | 13 | [Cross-Lead ECG Wave Landmark Recovery](Cross-Lead%20ECG%20Wave%20Landmark%20Recovery/readme.txt) | 🥉 3rd | 0.710 grouped 5-fold |
 | 14 | [Biomedical Concept Evidence Ranking](Biomedical%20Concept%20Evidence%20Ranking/readme.txt) | 🥉 3rd | 0.645 OOF composite |
 | 15 | [Reconstructing Corporate Group Hierarchies from Company Records](Reconstructing%20Corporate%20Group%20Hierarchies%20from%20Company%20Records/solution.py) | 🥉 3rd | — |
+| 16 | [Route and Read: Joint Tool Selection and Readiness](Route%20and%20Read%3A%20Joint%20Tool%20Selection%20and%20Readiness/readme.txt) | 🥉 3rd | 0.680 holdout |
 
 Scores are on my own held-out validation unless noted as a leaderboard (LB) figure; each metric is
 challenge-specific, so numbers are not comparable across rows.
@@ -258,6 +259,26 @@ Matrix-Tree theorem gives exact edge marginals, and a child gets its best non-ro
 that marginal clears a threshold. Boosting rounds, decode temperature and threshold are searched
 in-script on family-grouped 5-fold OOF of the full pipeline, with every transform re-fit inside each
 fold, and test pairs are scored by the average of the five fold models.
+
+### 🥉 Route and Read: Joint Tool Selection and Readiness
+
+**Problem.** Each row is an English or Chinese request with supplied arguments and three candidate
+tool schemas. Predict one of six labels that jointly encodes which candidate is relevant and
+whether its arguments are ready to execute. All three candidates in a row share the same
+readiness state, names are opaque handles, and request wording is deliberately lexically far from
+the right candidate while decoys share surface terms. The metric is plain accuracy.
+
+**Solution.** Factorize the label into routing and readiness inside one joint model. Readiness
+comes from a recursive JSON-schema walk of the supplied arguments (missing required keys, type,
+enum and range violations) whose counts feed a small learned head — 100% on the holdout, so the
+score is routing accuracy. Routing blends three fine-tuned multilingual backbones — two
+bi-encoders (MiniLM on root + parameter descriptions, mpnet on the root description) trained with
+in-batch negatives, and a bge-reranker cross-encoder — with weights searched on a stratified
+holdout. Fine-tuning carried a single bi-encoder from 0.50 zero-shot to 0.62, and a rendering quirk
+was worth another five points on Chinese: requests arrive as two-character fragments joined by
+"、", and removing the separator let the tokenizer see contiguous text again. A cross-encoder built
+from MiniLM was worse (0.46), but the pretrained reranker scored 0.60 alone and lifted the blend
+from 0.667 to 0.680. Lexical overlap is at chance by construction.
 
 ---
 
