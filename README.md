@@ -11,7 +11,7 @@ pretrained lookup tables, no hardcoded answer rules, no external corpora.
 
 ## Results
 
-16 challenges placed, all on the podium.
+17 challenges placed, all on the podium.
 
 | # | Challenge | Rank | Local score |
 |---|---|---|---|
@@ -31,6 +31,7 @@ pretrained lookup tables, no hardcoded answer rules, no external corpora.
 | 14 | [Biomedical Concept Evidence Ranking](Biomedical%20Concept%20Evidence%20Ranking/readme.txt) | 🥉 3rd | 0.645 OOF composite |
 | 15 | [Reconstructing Corporate Group Hierarchies from Company Records](Reconstructing%20Corporate%20Group%20Hierarchies%20from%20Company%20Records/solution.py) | 🥉 3rd | — |
 | 16 | [Route and Read: Joint Tool Selection and Readiness](Route%20and%20Read%3A%20Joint%20Tool%20Selection%20and%20Readiness/readme.txt) | 🥉 3rd | 0.680 holdout |
+| 17 | [Henkin Dependency Recovery](Henkin%20Dependency%20Recovery/readme.txt) | 🥉 3rd | 0.794 OOF / 0.730 design hold-out |
 
 Scores are on my own held-out validation unless noted as a leaderboard (LB) figure; each metric is
 challenge-specific, so numbers are not comparable across rows.
@@ -279,6 +280,30 @@ was worth another five points on Chinese: requests arrive as two-character fragm
 "、", and removing the separator let the tokenizer see contiguous text again. A cross-encoder built
 from MiniLM was worse (0.46), but the pretrained reranker scored 0.60 alone and lifted the blend
 from 0.667 to 0.680. Lexical overlap is at chance by construction.
+
+### 🥉 Henkin Dependency Recovery
+
+**Problem.** Each formula is a real Dependency Quantified Boolean Formula benchmark with its
+dependency prefix stripped, variables secretly renumbered and clauses shuffled. For each queried
+existential, predict the exact set of universals its Henkin function may read, using only the CNF
+matrix and the roughly 8% of dependency lines that survived as hints. Each query scores the geometric
+mean of the Jaccard similarities of the dependency set and its complement, averaged with equal weight
+per family; test formulas come from designs and circuits that never appear in training.
+
+**Solution.** Link prediction from existentials to universals on the clause graph. Each train formula
+is replayed through the documented damage model four times to produce training episodes that look like
+test: hints survive at 8%, queries are lost strict and full lines. Per-formula structure is computed
+deterministically from the formula's own CNF: Tseitin gate detection, BFS distances from every
+universal, polarity-aware Weisfeiler-Lehman colours, clause-shape signatures and random-walk profiles.
+Hint-dependent votes propagate the formula's own hint lines. Three LightGBM stages follow: a learned
+"same dependency set as this hint" model whose votes feed a gate (does the query depend on every
+universal?) and a per-universal membership model. Decoding maximizes the expected metric: Monte-Carlo
+samples from the membership posterior score each top-k candidate set against the gate's probability of
+"all universals". In-script grouped CV read 0.797 for an earlier version that scored 0.710 on the
+leaderboard, so I built an offline yardstick that holds out whole clustered designs and kept a change
+only if it improved both that and the grouped CV. Four simulated draws plus a 3-seed ensemble won
+(0.721 → 0.730 design hold-out); six draws, XOR-triple gate features and family-balanced weights did
+not. On unseen designs the full-versus-strict gate is the main remaining loss.
 
 ---
 
